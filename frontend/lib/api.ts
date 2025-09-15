@@ -1,4 +1,3 @@
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 interface ApiResponse<T> {
@@ -81,7 +80,9 @@ class ApiClient {
     }
   }
 
+  // ==========================
   // Authentication endpoints
+  // ==========================
   async login(email: string, password: string, tenantId: string) {
     return this.request<{
       access_token: string;
@@ -136,7 +137,9 @@ class ApiClient {
     }>('/api/v1/auth/me');
   }
 
+  // ==========================
   // Complaint endpoints
+  // ==========================
   async createComplaint(complaintData: {
     narrative: string;
     product?: string;
@@ -201,7 +204,9 @@ class ApiClient {
     }>(`/api/v1/complaints/${complaintId}/analysis`);
   }
 
+  // ==========================
   // Statistics endpoints
+  // ==========================
   async getComplaintStats(params?: {
     start_date?: string;
     end_date?: string;
@@ -235,7 +240,9 @@ class ApiClient {
     }>(`/api/v1/stats/benchmarks?${searchParams.toString()}`);
   }
 
+  // ==========================
   // Risk assessment endpoints
+  // ==========================
   async getRiskAssessments(params?: {
     skip?: number;
     limit?: number;
@@ -273,7 +280,9 @@ class ApiClient {
     }>('/api/v1/risk/high-risk/alerts');
   }
 
+  // ==========================
   // Solution endpoints
+  // ==========================
   async getSolutions(params?: {
     skip?: number;
     limit?: number;
@@ -313,7 +322,9 @@ class ApiClient {
     }>(`/api/v1/solutions/${complaintId}/letter?format=${format}`);
   }
 
+  // ==========================
   // Feedback endpoints
+  // ==========================
   async createFeedback(feedbackData: {
     complaint_id: number;
     rating: number;
@@ -346,7 +357,9 @@ class ApiClient {
     }>('/api/v1/feedback/analytics/summary');
   }
 
+  // ==========================
   // Admin endpoints
+  // ==========================
   async getTenants(params?: {
     skip?: number;
     limit?: number;
@@ -406,12 +419,137 @@ class ApiClient {
       created_at: string;
     }>>(`/api/v1/admin/audit-logs?${searchParams.toString()}`);
   }
+
+  // ==========================
+  // Settings endpoints
+  // ==========================
+  async getSettings() {
+    return this.request<{
+      general: {
+        organizationName: string;
+        domain: string;
+        timezone: string;
+        language: string;
+        dateFormat: string;
+        currency: string;
+      };
+      notifications: {
+        emailNotifications: boolean;
+        smsNotifications: boolean;
+        pushNotifications: boolean;
+        weeklyReports: boolean;
+        highRiskAlerts: boolean;
+        systemUpdates: boolean;
+        marketingEmails: boolean;
+      };
+      security: {
+        twoFactorEnabled: boolean;
+        sessionTimeout: number;
+        passwordExpiry: number;
+        loginAttempts: number;
+        ipWhitelist: string[];
+        auditLogging: boolean;
+      };
+      api: {
+        apiKeys: Array<{
+          id: string;
+          name: string;
+          key: string;
+          permissions: string[];
+          lastUsed: string;
+          expiresAt: string;
+        }>;
+        webhooks: Array<{
+          id: string;
+          url: string;
+          events: string[];
+          active: boolean;
+          lastTriggered: string;
+        }>;
+        rateLimit: number;
+        allowedOrigins: string[];
+      };
+      privacy: {
+        dataRetentionDays: number;
+        autoBackup: boolean;
+        backupFrequency: string;
+        gdprCompliance: boolean;
+        ccpaCompliance: boolean;
+        dataExportEnabled: boolean;
+        anonymizeData: boolean;
+      };
+    }>('/api/v1/settings/');
+  }
+
+  async updateSettings(settingsData: any) {
+    return this.request<any>('/api/v1/settings/', {
+      method: 'PUT',
+      body: JSON.stringify(settingsData),
+    });
+  }
+
+  async generateApiKey(name: string) {
+    return this.request<{
+      id: string;
+      name: string;
+      key: string;
+      permissions: string[];
+      lastUsed: string;
+      expiresAt: string;
+    }>('/api/v1/settings/api-keys', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+  }
+
+  async deleteApiKey(keyId: string) {
+    return this.request<any>(`/api/v1/settings/api-keys/${keyId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async createWebhook(webhookData: {
+    url: string;
+    events: string[];
+  }) {
+    return this.request<{
+      id: string;
+      url: string;
+      events: string[];
+      active: boolean;
+      lastTriggered: string;
+    }>('/api/v1/settings/webhooks', {
+      method: 'POST',
+      body: JSON.stringify(webhookData),
+    });
+  }
+
+  async deleteWebhook(webhookId: string) {
+    return this.request<any>(`/api/v1/settings/webhooks/${webhookId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async exportData(format: string = 'json') {
+    return this.request<{
+      download_url: string;
+      expires_at: string;
+    }>(`/api/v1/settings/export?format=${format}`);
+  }
+
+  async testWebhook(webhookId: string) {
+    return this.request<{
+      success: boolean;
+      response_time: number;
+      status_code: number;
+    }>(`/api/v1/settings/webhooks/${webhookId}/test`, {
+      method: 'POST',
+    });
+  }
 }
 
 // Export singleton instance
 export const apiClient = new ApiClient();
 
 // Export types for use in components
-export type {
-  ApiResponse
-};
+export type { ApiResponse };
