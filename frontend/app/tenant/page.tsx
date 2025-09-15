@@ -9,9 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
+import { cn } from "@/lib/utils"; // ✅ FIXED: added import
 import { 
   Building2, 
   Users, 
@@ -19,9 +20,6 @@ import {
   Shield,
   Activity,
   TrendingUp,
-  BarChart3,
-  Globe,
-  Lock,
   Database,
   Zap,
   CheckCircle,
@@ -29,11 +27,11 @@ import {
   Clock,
   FileText,
   Search,
-  Filter,
   Plus,
   Edit,
   Trash2,
-  MoreHorizontal
+  MoreHorizontal,
+  Lock
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -150,6 +148,7 @@ export default function TenantManagement() {
               ))}
             </div>
 
+            {/* Tabs */}
             <Tabs defaultValue="overview" className="space-y-6">
               <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -158,6 +157,7 @@ export default function TenantManagement() {
                 <TabsTrigger value="audit">Audit Logs</TabsTrigger>
               </TabsList>
 
+              {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Card>
@@ -239,6 +239,7 @@ export default function TenantManagement() {
                 </Card>
               </TabsContent>
 
+              {/* Users Tab */}
               <TabsContent value="users" className="space-y-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="relative flex-1">
@@ -339,6 +340,7 @@ export default function TenantManagement() {
                 </Card>
               </TabsContent>
 
+              {/* Settings Tab */}
               <TabsContent value="settings" className="space-y-6">
                 <div className="grid gap-6 lg:grid-cols-2">
                   <Card>
@@ -417,6 +419,7 @@ export default function TenantManagement() {
                 </div>
               </TabsContent>
 
+              {/* Audit Tab */}
               <TabsContent value="audit" className="space-y-6">
                 <Card>
                   <CardHeader>
