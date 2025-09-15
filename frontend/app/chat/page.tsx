@@ -19,7 +19,7 @@ import {
   Copy,
   ThumbsUp,
   ThumbsDown,
-  BarChart3 // ✅ Import BarChart3
+  BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
