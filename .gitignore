@@ -1,0 +1,103 @@
+# =========================
+# Global / OS
+# =========================
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+
+# =========================
+# Python / FastAPI backend
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.egg-info/
+*.eggs/
+.Python
+.venv/
+venv/
+env/
+.mypy_cache/
+.pytest_cache/
+coverage/
+htmlcov/
+.tox/
+.pyre/
+.dmypy.json
+.pytype/
+
+# Jupyter / Colab notebooks
+.ipynb_checkpoints
+*.ipynb
+
+# Virtualenv
+ENV/
+env.bak/
+venv.bak/
+
+# Model artifacts
+*.h5
+*.pt
+*.pth
+*.onnx
+*.joblib
+*.sav
+*.pickle
+
+# =========================
+# Node.js / Next.js frontend
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.next/
+out/
+build/
+dist/
+.cache/
+.eslintcache
+.stylelintcache
+
+# Next.js export
+.next/
+out/
+
+# dotenv environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =========================
+# Docker / Containers
+# =========================
+*.pid
+*.seed
+*.pid.lock
+docker-compose.override.yml
+*.dockerfile.swp
+
+# =========================
+# IDE / Editor settings
+# =========================
+.vscode/
+.idea/
+*.iml
+*.sublime-workspace
+*.sublime-project
+
+# =========================
+# Misc
+# =========================
+*.lock
+*.sqlite3
+*.db
