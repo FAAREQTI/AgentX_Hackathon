@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useComplaintStats, useBenchmarks } from "@/hooks/use-api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,10 +14,8 @@ import {
   TrendingDown, 
   AlertTriangle, 
   CheckCircle,
-  Users,
   FileText,
   Clock,
-  MapPin,
   Filter
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -126,13 +125,12 @@ export default function Analytics() {
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-5 w-5 text-warning" />
                 <div>
-                  <p className="font-medium text-foreground">Spike in High-Risk Complaints Detected</p>
-                  <Link href="/complaint">
-                    23% increase in unauthorized charge complaints in the last 24 hours. 
-                      New Analysis
-                      View details →
-                    </Button>
+                  <p className="font-medium text-foreground">
+                    Spike in High-Risk Complaints Detected
                   </p>
+                  <Link href="/complaint" className="text-sm text-primary hover:underline">
+                    23% increase in unauthorized charge complaints in the last 24 hours. View details →
+                  </Link>
                 </div>
               </div>
             </div>
@@ -211,7 +209,7 @@ export default function Analytics() {
                 </CardContent>
               </Card>
 
-              {/* Regional Distribution */}
+              {/* Industry Benchmarks */}
               <Card>
                 <CardHeader>
                   <CardTitle>Industry Benchmarks</CardTitle>
