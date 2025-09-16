@@ -1,370 +1,405 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useComplaintWorkflow } from "@/hooks/use-api";
+import { useState } from "react";
+import { useAuth } from "@/hooks/use-api";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Header } from "@/components/layout/header";
-import { Sidebar } from "@/components/layout/sidebar";
 import { 
-  Send, 
-  Mic, 
-  Bot, 
-  User,
-  Loader2,
-  CheckCircle,
-  AlertTriangle,
-  FileText,
-  Clock,
+  Building2, 
+  Shield, 
+  Users, 
+  Mail, 
+  Lock,
+  Eye,
+  EyeOff,
   ArrowRight,
-  Copy,
-  Download,
-  ThumbsUp,
-  ThumbsDown
+  CheckCircle
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import Link from "next/link";
 
-interface Message {
-  id: string;
-  type: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: Date;
-  metadata?: {
-    agent?: string;
-    step?: string;
-    confidence?: number;
-  };
-}
+const tenants = [
+  { id: "bank-a", name: "Bank A", type: "Financial Institution" },
+  { id: "bank-b", name: "Bank B", type: "Financial Institution" },
+  { id: "credit-union", name: "Community Credit Union", type: "Credit Union" },
+  { id: "regulator", name: "Financial Regulator", type: "Regulatory Body" }
+];
 
-export default function ChatPage() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      type: 'system',
-      content: 'Welcome to Complaint Intelligence Chat! I\'m here to help you file and analyze complaints using our AI-powered system. Please describe your complaint in detail.',
-      timestamp: new Date()
-    }
-  ]);
-  const [inputValue, setInputValue] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  const { workflowState, submitComplaint, resetWorkflow } = useComplaintWorkflow();
+const roles = [
+  { 
+    id: "consumer", 
+    name: "Consumer", 
+    description: "File complaints and receive solutions",
+    permissions: ["File complaints", "View solutions", "Download letters"]
+  },
+  { 
+    id: "analyst", 
+    name: "Analyst", 
+    description: "Review complaints and access analytics dashboard",
+    permissions: ["Review complaints", "Access dashboard", "Generate reports", "View analytics"]
+  },
+  { 
+    id: "admin", 
+    name: "Administrator", 
+    description: "Manage tenant users and system configuration",
+    permissions: ["User management", "RBAC configuration", "Audit logs", "System settings"]
+  }
+];
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+export default function LoginPage() {
+  const [activeTab, setActiveTab] = useState("login");
+  const [selectedTenant, setSelectedTenant] = useState("");
+  const [selectedRole, setSelectedRole] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    firstName: "",
+    lastName: "",
+    organization: ""
+  });
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const { login, register, error } = useAuth();
+  const router = useRouter();
 
-  // Update messages when workflow progresses
-  useEffect(() => {
-    if (workflowState.status === 'processing' && workflowState.currentAgent) {
-      const agentMessage: Message = {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: `🤖 ${workflowState.currentAgent} is analyzing your complaint...`,
-        timestamp: new Date(),
-        metadata: {
-          agent: workflowState.currentAgent,
-          step: 'processing'
-        }
-      };
-      
-      setMessages(prev => {
-        const lastMessage = prev[prev.length - 1];
-        if (lastMessage?.metadata?.agent === workflowState.currentAgent) {
-          return prev; // Don't duplicate agent messages
-        }
-        return [...prev, agentMessage];
-      });
-    }
-
-    if (workflowState.status === 'completed' && workflowState.results) {
-      const completionMessage: Message = {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: generateCompletionMessage(workflowState.results),
-        timestamp: new Date(),
-        metadata: {
-          step: 'completed',
-          confidence: 0.95
-        }
-      };
-      
-      setMessages(prev => [...prev, completionMessage]);
-    }
-
-    if (workflowState.status === 'error') {
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: `❌ I encountered an error while processing your complaint: ${workflowState.error}. Please try again or contact support if the issue persists.`,
-        timestamp: new Date(),
-        metadata: {
-          step: 'error'
-        }
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-    }
-  }, [workflowState]);
-
-  const generateCompletionMessage = (results: any) => {
-    const riskScore = results.risk_assessment?.risk_score || 0;
-    const riskCategory = results.risk_assessment?.risk_category || 'medium';
-    const similarCount = results.similar_complaints?.length || 0;
-    const strategy = results.solution?.primary_solution?.resolution_strategy || 'Standard resolution';
-
-    return `✅ **Analysis Complete!**
-
-📊 **Risk Assessment**: ${riskCategory.toUpperCase()} risk (${(riskScore * 100).toFixed(0)}% score)
-🔍 **Similar Cases**: Found ${similarCount} similar complaints in our database
-💡 **Recommended Strategy**: ${strategy}
-⏱️ **Estimated Resolution**: ${results.solution?.primary_solution?.estimated_resolution_time || 'TBD'}
-
-Your complaint has been processed through our 6-stage AI workflow. You can now view the detailed analysis and generated response letter.`;
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+  const handleLogin = async () => {
+    if (!selectedTenant || !formData.email || !formData.password) return;
+    
+    setIsLoading(true);
+    const success = await login(formData.email, formData.password, selectedTenant);
+    setIsLoading(false);
+    
+    if (success) {
+      router.push("/dashboard");
+    }
+  };
 
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: inputValue,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue("");
-
-    // Add processing message
-    const processingMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      type: 'assistant',
-      content: '🔄 Starting AI analysis of your complaint...',
-      timestamp: new Date(),
-      metadata: {
-        step: 'starting'
-      }
-    };
-
-    setMessages(prev => [...prev, processingMessage]);
-
-    // Submit to workflow
-    await submitComplaint({
-      narrative: inputValue,
+  const handleRegister = async () => {
+    if (!selectedTenant || !selectedRole || !formData.email || !formData.password || 
+        formData.password !== formData.confirmPassword || !formData.firstName || !formData.lastName) {
+      return;
+    }
+    
+    setIsLoading(true);
+    const success = await register({
+      email: formData.email,
+      password: formData.password,
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      tenant_id: selectedTenant,
+      role: selectedRole
     });
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+    setIsLoading(false);
+    
+    if (success) {
+      router.push("/dashboard");
     }
-  };
-
-  const handleVoiceInput = () => {
-    setIsRecording(!isRecording);
-    // Voice recording implementation would go here
-  };
-
-  const handleFeedback = (messageId: string, positive: boolean) => {
-    // Feedback implementation would go here
-    console.log(`Feedback for message ${messageId}: ${positive ? 'positive' : 'negative'}`);
   };
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar isOpen={sidebarOpen} />
-      
-      <div className="flex-1 flex flex-col">
-        <Header 
-          title="AI Chat Assistant" 
-          showNavigation={true}
-          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-          showMobileMenu
-        />
-        
-        <div className="flex-1 flex flex-col">
-          {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-4xl mx-auto space-y-6">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "flex gap-4",
-                    message.type === 'user' ? "justify-end" : "justify-start"
-                  )}
-                >
-                  {message.type !== 'user' && (
-                    <Avatar className="h-8 w-8 mt-1">
-                      <AvatarFallback className="bg-primary/10">
-                        {message.type === 'system' ? '🤖' : 'AI'}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  
-                  <div
-                    className={cn(
-                      "max-w-[80%] rounded-lg px-4 py-3",
-                      message.type === 'user'
-                        ? "bg-primary text-primary-foreground ml-auto"
-                        : message.type === 'system'
-                        ? "bg-muted/50 border"
-                        : "bg-muted border"
-                    )}
-                  >
-                    <div className="space-y-2">
-                      <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {message.content}
-                      </div>
-                      
-                      {message.metadata && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          <span>{message.timestamp.toLocaleTimeString()}</span>
-                          {message.metadata.agent && (
-                            <>
-                              <span>•</span>
-                              <span className="capitalize">{message.metadata.agent.replace('_', ' ')}</span>
-                            </>
-                          )}
-                          {message.metadata.confidence && (
-                            <>
-                              <span>•</span>
-                              <span>{(message.metadata.confidence * 100).toFixed(0)}% confidence</span>
-                            </>
-                          )}
-                        </div>
-                      )}
-                      
-                      {message.type === 'assistant' && message.metadata?.step === 'completed' && (
-                        <div className="flex gap-2 mt-3">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleFeedback(message.id, true)}
-                            className="gap-1"
-                          >
-                            <ThumbsUp className="h-3 w-3" />
-                            Helpful
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleFeedback(message.id, false)}
-                            className="gap-1"
-                          >
-                            <ThumbsDown className="h-3 w-3" />
-                            Not Helpful
-                          </Button>
-                          <Button size="sm" variant="outline" className="gap-1">
-                            <Copy className="h-3 w-3" />
-                            Copy
-                          </Button>
-                        </div>
-                      )}
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl">
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center gap-3 mb-6 hover:opacity-80 transition-opacity">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-lg">CC</span>
+            </div>
+            <h1 className="text-3xl font-bold">Complaint Compass</h1>
+          </Link>
+          <p className="text-muted-foreground text-lg">
+            Access your enterprise complaint management platform
+          </p>
+        </div>
+
+        <Card className="shadow-2xl border-0 bg-background/80 backdrop-blur-sm">
+          <CardContent className="p-0">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <div className="border-b bg-muted/30">
+                <TabsList className="grid w-full grid-cols-2 bg-transparent h-16">
+                  <TabsTrigger value="login" className="text-lg py-4">Sign In</TabsTrigger>
+                  <TabsTrigger value="register" className="text-lg py-4">Create Account</TabsTrigger>
+                </TabsList>
+              </div>
+
+              <TabsContent value="login" className="p-8 space-y-6">
+                {error && (
+                  <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                    <p className="text-sm text-destructive">{error}</p>
+                  </div>
+                )}
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="tenant-login">Select Organization</Label>
+                    <Select value={selectedTenant} onValueChange={setSelectedTenant}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose your organization" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tenants.map((tenant) => (
+                          <SelectItem key={tenant.id} value={tenant.id}>
+                            <div className="flex items-center gap-3">
+                              <Building2 className="h-4 w-4" />
+                              <div>
+                                <div className="font-medium">{tenant.name}</div>
+                                <div className="text-xs text-muted-foreground">{tenant.type}</div>
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email-login">Email Address</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="email-login"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        className="pl-10"
+                      />
                     </div>
                   </div>
-                  
-                  {message.type === 'user' && (
-                    <Avatar className="h-8 w-8 mt-1">
-                      <AvatarFallback>U</AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
-              ))}
-              
-              {/* Workflow Progress */}
-              {workflowState.status === 'processing' && (
-                <div className="flex justify-center">
-                  <Card className="w-full max-w-md">
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                          <span className="text-sm font-medium">Processing your complaint...</span>
-                        </div>
-                        <Progress value={workflowState.progress} className="h-2" />
-                        <div className="text-xs text-muted-foreground text-center">
-                          {workflowState.progress}% complete
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-              
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
 
-          {/* Input Area */}
-          <div className="border-t bg-background p-6">
-            <div className="max-w-4xl mx-auto">
-              <div className="flex gap-4">
-                <div className="flex-1 relative">
-                  <Input
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Describe your complaint in detail..."
-                    className="pr-12"
-                    disabled={workflowState.status === 'processing'}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2"
-                    onClick={handleVoiceInput}
-                    disabled={workflowState.status === 'processing'}
+                  <div className="space-y-2">
+                    <Label htmlFor="password-login">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="password-login"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter your password"
+                        value={formData.password}
+                        onChange={(e) => handleInputChange("password", e.target.value)}
+                        className="pl-10 pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="remember" className="rounded" />
+                      <Label htmlFor="remember" className="text-sm">Remember me</Label>
+                    </div>
+                    <Button variant="link" className="p-0 h-auto text-sm">
+                      Forgot password?
+                    </Button>
+                  </div>
+
+                  <Button 
+                    onClick={handleLogin} 
+                    className="w-full gap-2 py-6 text-lg"
+                    disabled={!selectedTenant || !formData.email || !formData.password || isLoading}
                   >
-                    <Mic className={cn("h-4 w-4", isRecording && "text-destructive animate-pulse")} />
+                    {isLoading ? (
+                      <>
+                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        Signing In...
+                      </>
+                    ) : (
+                      <>
+                        Sign In
+                        <ArrowRight className="h-5 w-5" />
+                      </>
+                    )}
+                  </Button>
+
+                  <Separator />
+
+                  <Button variant="outline" className="w-full gap-2 py-6">
+                    <Shield className="h-5 w-5" />
+                    Sign in with SSO
                   </Button>
                 </div>
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!inputValue.trim() || workflowState.status === 'processing'}
-                  className="gap-2"
-                >
-                  {workflowState.status === 'processing' ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
+              </TabsContent>
+
+              <TabsContent value="register" className="p-8 space-y-6">
+                {error && (
+                  <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                    <p className="text-sm text-destructive">{error}</p>
+                  </div>
+                )}
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        placeholder="John"
+                        value={formData.firstName}
+                        onChange={(e) => handleInputChange("firstName", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        placeholder="Doe"
+                        value={formData.lastName}
+                        onChange={(e) => handleInputChange("lastName", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email-register">Email Address</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="email-register"
+                        type="email"
+                        placeholder="john.doe@company.com"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tenant-register">Organization</Label>
+                    <Select value={selectedTenant} onValueChange={setSelectedTenant}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your organization" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tenants.map((tenant) => (
+                          <SelectItem key={tenant.id} value={tenant.id}>
+                            <div className="flex items-center gap-3">
+                              <Building2 className="h-4 w-4" />
+                              <div>
+                                <div className="font-medium">{tenant.name}</div>
+                                <div className="text-xs text-muted-foreground">{tenant.type}</div>
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="role-register">Role</Label>
+                    <Select value={selectedRole} onValueChange={setSelectedRole}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {roles.map((role) => (
+                          <SelectItem key={role.id} value={role.id}>
+                            <div className="flex items-center gap-3">
+                              <Users className="h-4 w-4" />
+                              <div>
+                                <div className="font-medium">{role.name}</div>
+                                <div className="text-xs text-muted-foreground">{role.description}</div>
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {selectedRole && (
+                    <Card className="bg-muted/30">
+                      <CardContent className="p-4">
+                        <h4 className="font-medium mb-2">Role Permissions:</h4>
+                        <div className="space-y-1">
+                          {roles.find(r => r.id === selectedRole)?.permissions.map((permission, index) => (
+                            <div key={index} className="flex items-center gap-2 text-sm">
+                              <CheckCircle className="h-3 w-3 text-success" />
+                              <span>{permission}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
                   )}
-                  Send
-                </Button>
-              </div>
-              
-              {workflowState.complaint_id && workflowState.status === 'completed' && (
-                <div className="flex gap-2 mt-4">
-                  <Link href={`/letters?complaint_id=${workflowState.complaint_id}`}>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <FileText className="h-4 w-4" />
-                      View Solution Letter
-                    </Button>
-                  </Link>
-                  <Link href="/analytics">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Activity className="h-4 w-4" />
-                      View Analytics
-                    </Button>
-                  </Link>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="password-register">Password</Label>
+                      <Input
+                        id="password-register"
+                        type="password"
+                        placeholder="Create password"
+                        value={formData.password}
+                        onChange={(e) => handleInputChange("password", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        placeholder="Confirm password"
+                        value={formData.confirmPassword}
+                        onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="terms" className="rounded" />
+                    <Label htmlFor="terms" className="text-sm">
+                      I agree to the <Button variant="link" className="p-0 h-auto text-sm">Terms of Service</Button> and <Button variant="link" className="p-0 h-auto text-sm">Privacy Policy</Button>
+                    </Label>
+                  </div>
+
+                  <Button 
+                    onClick={handleRegister}
+                    className="w-full gap-2 py-6 text-lg"
+                    disabled={!selectedTenant || !selectedRole || !formData.email || !formData.password || formData.password !== formData.confirmPassword || isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        Creating Account...
+                      </>
+                    ) : (
+                      <>
+                        Create Account
+                        <ArrowRight className="h-5 w-5" />
+                      </>
+                    )}
+                  </Button>
                 </div>
-              )}
-            </div>
-          </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        <div className="text-center mt-8">
+          <p className="text-sm text-muted-foreground">
+            Need help? <Button variant="link" className="p-0 h-auto text-sm">Contact Support</Button>
+          </p>
         </div>
       </div>
     </div>
