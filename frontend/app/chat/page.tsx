@@ -24,7 +24,8 @@ import {
   Copy,
   Download,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  Activity
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
