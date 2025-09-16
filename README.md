@@ -1,6 +1,5 @@
-# Complaint Compass Backend API
-
-Complaint Compass is multi-tenant complaint analysis platform with AI-powered risk assessment and solution generation.
+# Complaint Compass 
+Complaint Compass is a multi-tenant complaint analysis platform with AI-powered risk assessment and solution generation. This project is a full-stack application with a backend API built with FastAPI and a modern frontend using Next.js, shadcn/ui, and Tailwind CSS.
 
 ## Features
 
@@ -11,6 +10,7 @@ Complaint Compass is multi-tenant complaint analysis platform with AI-powered ri
 - **Real-time Analytics**: HTAP queries with TiDB Cloud Serverless
 - **Enterprise Security**: JWT authentication, audit logging, compliance
 - **Observability**: OpenTelemetry tracing with Jaeger integration
+- **Modern Frontend**: A responsive, accessible dashboard built with Next.js, shadcn/ui, and Tailwind CSS.
 
 ## Architecture
 
@@ -26,6 +26,9 @@ Complaint Compass is multi-tenant complaint analysis platform with AI-powered ri
 ### Technology Stack
 
 - **Framework**: FastAPI with async/await
+- **Frontend**: Next.js with React.
+- **UI Library**: shadcn/ui.
+- **Styling**: Tailwind CSS.
 - **Database**: TiDB Cloud Serverless (MySQL-compatible)
 - **AI/ML**: OpenAI GPT-4, XGBoost, scikit-learn
 - **Vector Store**: TiDB VECTOR columns with HNSW indexing
@@ -61,6 +64,32 @@ make init-db
 
 # Run development server
 make dev
+```
+
+### Frontend Installation (/frontend)
+# Navigate to the frontend directory.
+
+```Bash
+
+cd ../frontend
+Install dependencies.
+```
+```Bash
+
+npm install
+Configure your environment variables to point to the backend API.
+```
+```Bash
+
+cp .env.example .env.local
+# Configure the API URL in .env.local
+# NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+Run the development server.
+```
+```Bash
+
+npm run dev
+The frontend application will be available at http://localhost:3000.
 ```
 
 ### Docker Setup
