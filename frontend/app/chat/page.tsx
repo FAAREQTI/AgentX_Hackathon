@@ -46,11 +46,11 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
-      type: 'system',
-      content: 'Welcome to Complaint Intelligence Chat! I\'m here to help you file and analyze complaints using our AI-powered system. Please describe your complaint in detail.',
-      timestamp: new Date()
-    }
+      id: "1",
+      type: "system",
+      content: `Welcome to Complaint Intelligence Chat! I'm here to help you file and analyze complaints using our AI-powered system. Please describe your complaint in detail.`,
+      timestamp: new Date(),
+    },
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isRecording, setIsRecording] = useState(false);
